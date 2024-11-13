@@ -3,41 +3,47 @@
 //
 
 #include "slam/frontend.h"
-#include "slam/config_parameters.h"
 #include "common/constant_variable.h"
 #include "common/pointcloud_utility.h"
-#include "optimization/g2o/vertex_type.h"
-#include "optimization/g2o/rotation_edge.h"
-#include "optimization/g2o/position_edge.h"
-#include "optimization/g2o/gyro_bias_rw_edge.h"
 #include "optimization/g2o/accel_bias_rw_edge.h"
 #include "optimization/g2o/g2o_optimizer_header.h"
+#include "optimization/g2o/gyro_bias_rw_edge.h"
+#include "optimization/g2o/position_edge.h"
 #include "optimization/g2o/pre_integration_edge.h"
 #include "optimization/g2o/prior_nav_state_edge.h"
+#include "optimization/g2o/rotation_edge.h"
+#include "optimization/g2o/vertex_type.h"
 #include "registration/icp_optimized.h"
 #include "registration/incremental_ndt.h"
 #include "registration/loam_full_kdtree.h"
 #include "registration/loam_point_to_plane_ivox.h"
+#include "slam/config_parameters.h"
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-FrontEnd::FrontEnd(System* system_ptr) :
-    system_ptr_(system_ptr) {
+FrontEnd::FrontEnd(System* system_ptr) : system_ptr_(system_ptr)
+{
     SetLidarPoseInformation();
     InitMatcher();
 }
 
-void FrontEnd::InitMatcher() {
-    if (ConfigParameters::Instance().registration_and_searcher_mode_ == kPointToPlane_IVOX) {
+void FrontEnd::InitMatcher()
+{
+    if (ConfigParameters::Instance().registration_and_searcher_mode_ == kPointToPlane_IVOX)
+    {
         matcher_ = std::make_shared<LoamPointToPlaneIVOX<double>>(
             ConfigParameters::Instance().registration_point_to_planar_thres_,
             ConfigParameters::Instance().registration_position_converge_thres_,
             ConfigParameters::Instance().registration_rotation_converge_thres_,
-            ConfigParameters::Instance().registration_opti_iter_num_
-        );
-    } else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kLoamFull_KdTree) {
-        if ((LidarModel::Instance()->lidar_sensor_type_ == LidarModel::LidarSensorType::LIVOX_AVIA) ||
-            (LidarModel::Instance()->lidar_sensor_type_ == LidarModel::LidarSensorType::LIVOX_MID_360)) {
+            ConfigParameters::Instance().registration_opti_iter_num_);
+    }
+    else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kLoamFull_KdTree)
+    {
+        if ((LidarModel::Instance()->lidar_sensor_type_ ==
+             LidarModel::LidarSensorType::LIVOX_AVIA) ||
+            (LidarModel::Instance()->lidar_sensor_type_ ==
+             LidarModel::LidarSensorType::LIVOX_MID_360))
+        {
             LOG(FATAL) << "Only mechanical Lidar can use LOAM of Point-to-Plane and Point-to-Line";
         }
 
@@ -53,21 +59,24 @@ void FrontEnd::InitMatcher() {
             static_cast<size_t>(ConfigParameters::Instance().registration_local_planar_map_size_),
             ConfigParameters::Instance().registration_local_corner_filter_size_,
             ConfigParameters::Instance().registration_local_planar_filter_size_,
-            ConfigParameters::Instance().registration_opti_iter_num_
-        );
-    } else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kIcpOptimized) {
+            ConfigParameters::Instance().registration_opti_iter_num_);
+    }
+    else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kIcpOptimized)
+    {
         matcher_ = std::make_shared<IcpOptimized<double>>(
             ConfigParameters::Instance().registration_opti_iter_num_,
             ConfigParameters::Instance().registration_local_map_size_,
-            static_cast<float>(ConfigParameters::Instance().registration_local_map_cloud_filter_size_),
+            static_cast<float>(
+                ConfigParameters::Instance().registration_local_map_cloud_filter_size_),
             static_cast<float>(ConfigParameters::Instance().registration_source_cloud_filter_size_),
             static_cast<double>(ConfigParameters::Instance().registration_point_search_thres_),
             static_cast<double>(ConfigParameters::Instance().registration_position_converge_thres_),
             static_cast<double>(ConfigParameters::Instance().registration_rotation_converge_thres_),
             static_cast<double>(ConfigParameters::Instance().registration_keyframe_delta_rotation_),
-            static_cast<double>(ConfigParameters::Instance().registration_keyframe_delta_dist_)
-        );
-    } else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kIncrementalNDT) {
+            static_cast<double>(ConfigParameters::Instance().registration_keyframe_delta_dist_));
+    }
+    else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kIncrementalNDT)
+    {
         matcher_ = std::make_shared<IncrementalNDT>(
             ConfigParameters::Instance().registration_ndt_voxel_size_,
             ConfigParameters::Instance().registration_ndt_outlier_threshold_,
@@ -78,16 +87,18 @@ void FrontEnd::InitMatcher() {
             ConfigParameters::Instance().registration_ndt_max_points_in_voxel_,
             ConfigParameters::Instance().registration_ndt_min_effective_pts_,
             ConfigParameters::Instance().registration_ndt_capacity_,
-            ConfigParameters::Instance().registration_opti_iter_num_
-        );
-    } else {
+            ConfigParameters::Instance().registration_opti_iter_num_);
+    }
+    else
+    {
         LOG(FATAL) << "Unsupported registration type! "
-            "You can choose one of the following: "
-            "PointToPlane_IVOX, LoamFull_KdTree, IcpOptimized, kIncrementalNDT";
+                      "You can choose one of the following: "
+                      "PointToPlane_IVOX, LoamFull_KdTree, IcpOptimized, kIncrementalNDT";
     }
 }
 
-void FrontEnd::InitPreIntegration() {
+void FrontEnd::InitPreIntegration()
+{
     PreIntegration::ConfigPara config_para;
     config_para.init_acc_bias_ = Vec3d(ConfigParameters::Instance().imu_init_acc_bias_,
                                        ConfigParameters::Instance().imu_init_acc_bias_,
@@ -107,7 +118,8 @@ void FrontEnd::InitPreIntegration() {
     pre_integration_ptr_ = std::make_shared<PreIntegration>(config_para);
 }
 
-void FrontEnd::SetLidarPoseInformation() {
+void FrontEnd::SetLidarPoseInformation()
+{
     const auto& lidar_rot_std = ConfigParameters::Instance().lidar_rotation_noise_std_;
     const auto& lidar_posi_std = ConfigParameters::Instance().lidar_position_noise_std_;
 
@@ -116,24 +128,30 @@ void FrontEnd::SetLidarPoseInformation() {
     lidar_pose_info_.block<3, 3>(3, 3) = Mat3d::Identity() * 1.0 / std::pow(lidar_posi_std, 2.0);
 }
 
-Mat4d FrontEnd::InitOdometer() {
+Mat4d FrontEnd::InitOdometer()
+{
     Eigen::Quaterniond q_curr = curr_cloud_cluster_ptr_->imu_data_.back().orientation_;
 
     Mat4d init_pose = Mat4d::Identity();
     init_pose.block<3, 3>(0, 0) = q_curr.matrix();
 
-    if (ConfigParameters::Instance().registration_and_searcher_mode_ == kLoamFull_KdTree) {
+    if (ConfigParameters::Instance().registration_and_searcher_mode_ == kLoamFull_KdTree)
+    {
         PCLPointCloudXYZI transformed_corner;
         PCLPointCloudXYZI transformed_planer;
         transformed_planer = TransformPointCloud(curr_cloud_cluster_ptr_->planar_cloud_, init_pose);
         transformed_corner = TransformPointCloud(curr_cloud_cluster_ptr_->corner_cloud_, init_pose);
         matcher_->AddCloudToLocalMap({transformed_planer, transformed_corner});
-    } else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kPointToPlane_IVOX) {
+    }
+    else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kPointToPlane_IVOX)
+    {
         PCLPointCloudXYZI transformed_planer;
         transformed_planer = TransformPointCloud(curr_cloud_cluster_ptr_->planar_cloud_, init_pose);
         matcher_->AddCloudToLocalMap({transformed_planer});
-    } else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kIcpOptimized ||
-        ConfigParameters::Instance().registration_and_searcher_mode_ == kIncrementalNDT) {
+    }
+    else if (ConfigParameters::Instance().registration_and_searcher_mode_ == kIcpOptimized ||
+             ConfigParameters::Instance().registration_and_searcher_mode_ == kIncrementalNDT)
+    {
         PCLPointCloudXYZI transformed_cloud;
         transformed_cloud = TransformPointCloud(curr_cloud_cluster_ptr_->ordered_cloud_, init_pose);
         matcher_->AddCloudToLocalMap({transformed_cloud});
@@ -143,8 +161,9 @@ Mat4d FrontEnd::InitOdometer() {
     cov.block<3, 3>(0, 0) = Mat3d::Identity() * 1.0e-6 * 1.0e-6; // rotation information matrix
     cov.block<3, 3>(3, 3) = Mat3d::Identity() * 1.0e-2 * 1.0e-2; // velocity information matrix
     cov.block<3, 3>(6, 6) = Mat3d::Identity() * 1.0e-6 * 1.0e-6; // position information matrix
-    cov.block<3, 3>(9, 9) = Mat3d::Identity() * std::pow(0.1 * kDegree2Radian, 2); // bias gyro information matrix
-    cov.block<3, 3>(12, 12) = Mat3d::Identity() * 0.1 * 0.1; // bias accel information matrix
+    cov.block<3, 3>(9, 9) =
+        Mat3d::Identity() * std::pow(0.1 * kDegree2Radian, 2); // bias gyro information matrix
+    cov.block<3, 3>(12, 12) = Mat3d::Identity() * 0.1 * 0.1;   // bias accel information matrix
     last_nav_state_.SetPose(init_pose);
     last_nav_state_.V_ = Vec3d::Zero();
     last_nav_state_.info_ = cov.inverse();
@@ -157,14 +176,18 @@ Mat4d FrontEnd::InitOdometer() {
     return init_pose;
 }
 
-void FrontEnd::Run() {
+void FrontEnd::Run()
+{
     LOG(INFO) << "\033[1;32m----> FrontEnd Started.\033[0m";
 
-    while (ros::ok()) {
+    while (rclcpp::ok())
+    {
         {
             std::unique_lock<std::mutex> lock(system_ptr_->mutex_cloud_cluster_deque_);
-            while (system_ptr_->cloud_cluster_deque_.empty()) {
-                if (!ros::ok()) {
+            while (system_ptr_->cloud_cluster_deque_.empty())
+            {
+                if (!rclcpp::ok())
+                {
                     return;
                 }
                 system_ptr_->cv_frontend_.wait(lock);
@@ -179,7 +202,8 @@ void FrontEnd::Run() {
         Timer timer_frontend;
 
         // Initialize
-        if (!has_init_) {
+        if (!has_init_)
+        {
             InitOdometer();
             InitPreIntegration();
             CacheFrameToSystem();
@@ -188,30 +212,41 @@ void FrontEnd::Run() {
 
         NavStateData predict_nav_state;
 
-        if (ConfigParameters::Instance().fusion_method_ == kFusionTightCouplingOptimization) {
+        if (ConfigParameters::Instance().fusion_method_ == kFusionTightCouplingOptimization)
+        {
             // use imu integrals as predicted values for registration
             predict_nav_state = IntegrateImuMeasures(last_nav_state_);
-        } else if (ConfigParameters::Instance().fusion_method_ == kFusionLooseCoupling) {
+        }
+        else if (ConfigParameters::Instance().fusion_method_ == kFusionLooseCoupling)
+        {
             // use imu integrated rotation
             predict_nav_state.SetPose(last_nav_state_.Pose() * delta_pose_);
-            const Eigen::Quaterniond& first_q = curr_cloud_cluster_ptr_->imu_data_.front().orientation_;
-            const Eigen::Quaterniond& end_q = curr_cloud_cluster_ptr_->imu_data_.back().orientation_;
+            const Eigen::Quaterniond& first_q =
+                curr_cloud_cluster_ptr_->imu_data_.front().orientation_;
+            const Eigen::Quaterniond& end_q =
+                curr_cloud_cluster_ptr_->imu_data_.back().orientation_;
             predict_nav_state.R_ = last_nav_state_.R_ * (first_q.inverse() * end_q);
-        } else if (ConfigParameters::Instance().fusion_method_ == kFusionTightCouplingKF) {
+        }
+        else if (ConfigParameters::Instance().fusion_method_ == kFusionTightCouplingKF)
+        {
             LOG(FATAL) << "Kalman filter will be supported soon!";
-        } else {
+        }
+        else
+        {
             LOG(FATAL) << "frontend fusion method doesn't support: "
-                << ConfigParameters::Instance().fusion_method_;
+                       << ConfigParameters::Instance().fusion_method_;
         }
 
         Mat4d match_pose = predict_nav_state.Pose();
-        if (!matcher_->Match(curr_cloud_cluster_ptr_, match_pose)) {
+        if (!matcher_->Match(curr_cloud_cluster_ptr_, match_pose))
+        {
             continue;
         }
 
         // Set initial status value
         NavStateData curr_nav_state;
-        if (ConfigParameters::Instance().fusion_method_ == kFusionTightCouplingOptimization) {
+        if (ConfigParameters::Instance().fusion_method_ == kFusionTightCouplingOptimization)
+        {
             curr_nav_state.SetPose(predict_nav_state.Pose());
             curr_nav_state.V_ = predict_nav_state.V_;
             curr_nav_state.timestamp_ = curr_time_us_;
@@ -220,13 +255,17 @@ void FrontEnd::Run() {
 
             // Start pre-integration optimization
             Optimize(curr_nav_state, match_pose);
-        } else if (ConfigParameters::Instance().fusion_method_ == kFusionLooseCoupling) {
+        }
+        else if (ConfigParameters::Instance().fusion_method_ == kFusionLooseCoupling)
+        {
             curr_nav_state.SetPose(match_pose);
             curr_nav_state.V_ = predict_nav_state.V_;
             curr_nav_state.timestamp_ = curr_time_us_;
-        } else {
+        }
+        else
+        {
             LOG(FATAL) << "frontend fusion method doesn't support: "
-                << ConfigParameters::Instance().fusion_method_;
+                       << ConfigParameters::Instance().fusion_method_;
         }
 
         // current lidar pose
@@ -247,12 +286,12 @@ void FrontEnd::Run() {
     }
 }
 
-void FrontEnd::Optimize(NavStateData& curr_nav_state, const Mat4d& lidar_pose) {
+void FrontEnd::Optimize(NavStateData& curr_nav_state, const Mat4d& lidar_pose)
+{
     using BlockSolverType = g2o::BlockSolverX;
     using LinearSolverType = g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType>;
     auto* solver = new g2o::OptimizationAlgorithmLevenberg(
-        std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>())
-    );
+        std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>()));
 
     g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(solver);
@@ -355,7 +394,8 @@ void FrontEnd::Optimize(NavStateData& curr_nav_state, const Mat4d& lidar_pose) {
 
     // === imu acc bias random walk edge ===
     Mat3d acc_bias_rw_info = Mat3d::Identity();
-    acc_bias_rw_info = acc_bias_rw_info * (1.0 / std::pow(ConfigParameters::Instance().imu_acc_rw_noise_std_, 2.0));
+    acc_bias_rw_info = acc_bias_rw_info *
+                       (1.0 / std::pow(ConfigParameters::Instance().imu_acc_rw_noise_std_, 2.0));
     auto* edge_acc_bias_rw = new EdgeAccelBiasRW();
     edge_acc_bias_rw->setVertex(0, vertex_ba_last);
     edge_acc_bias_rw->setVertex(1, vertex_ba_curr);
@@ -364,7 +404,8 @@ void FrontEnd::Optimize(NavStateData& curr_nav_state, const Mat4d& lidar_pose) {
 
     // === imu gyro bias random walk edge ===
     Mat3d gyro_bias_rw_info = Mat3d::Identity();
-    gyro_bias_rw_info = gyro_bias_rw_info * (1.0 / std::pow(ConfigParameters::Instance().imu_gyro_rw_noise_std_, 2.0));
+    gyro_bias_rw_info = gyro_bias_rw_info *
+                        (1.0 / std::pow(ConfigParameters::Instance().imu_gyro_rw_noise_std_, 2.0));
     auto* edge_gyro_bias_rw = new EdgeGyroBiasRW();
     edge_gyro_bias_rw->setVertex(0, vertex_bg_last);
     edge_gyro_bias_rw->setVertex(1, vertex_bg_curr);
@@ -402,19 +443,23 @@ void FrontEnd::Optimize(NavStateData& curr_nav_state, const Mat4d& lidar_pose) {
     posterior_info.block<3, 3>(27, 12) += acc_bias_posterior_info.block<3, 3>(3, 0);
 
     // pre-integration posterior info
-    const Mat24d edge_preintegration_posterior_info = edge_preintegration->GetPosteriorInformation();
+    const Mat24d edge_preintegration_posterior_info =
+        edge_preintegration->GetPosteriorInformation();
     posterior_info.block<24, 24>(0, 0) += edge_preintegration_posterior_info;
 
     // gps rotation posterior info
-    const Mat3d edge_lidar_rotation_posterior_info = edge_lidar_rotation_edge->GetPosteriorInformation();
+    const Mat3d edge_lidar_rotation_posterior_info =
+        edge_lidar_rotation_edge->GetPosteriorInformation();
     posterior_info.block<3, 3>(15, 15) += edge_lidar_rotation_posterior_info;
 
     // gps position posterior info
-    const Mat3d edge_lidar_position_posterior_info = edge_lidar_position_edge->GetPosteriorInformation();
+    const Mat3d edge_lidar_position_posterior_info =
+        edge_lidar_position_edge->GetPosteriorInformation();
     posterior_info.block<3, 3>(21, 21) += edge_lidar_position_posterior_info;
 
     // last nav state prior posterior info
-    const Mat15d edge_last_nav_state_prior_posterior_info = edge_prior_last_nav_state->GetPosteriorInformation();
+    const Mat15d edge_last_nav_state_prior_posterior_info =
+        edge_prior_last_nav_state->GetPosteriorInformation();
     posterior_info.block<15, 15>(0, 0) += edge_last_nav_state_prior_posterior_info;
 
     curr_nav_state.R_ = curr_R_opti;
@@ -430,12 +475,14 @@ void FrontEnd::Optimize(NavStateData& curr_nav_state, const Mat4d& lidar_pose) {
         << "The value of gyro bias is too large, and the optimization may diverge.";
 }
 
-NavStateData FrontEnd::IntegrateImuMeasures(const NavStateData& last_nav_state) const {
+NavStateData FrontEnd::IntegrateImuMeasures(const NavStateData& last_nav_state) const
+{
     pre_integration_ptr_->IntegrateDataSegment(curr_cloud_cluster_ptr_->imu_data_);
     return pre_integration_ptr_->Predict(last_nav_state);
 }
 
-void FrontEnd::CacheFrameToSystem() const {
+void FrontEnd::CacheFrameToSystem() const
+{
     std::lock_guard<std::mutex> lk(system_ptr_->mutex_frame_temp_deque_);
 
     auto frame = std::make_shared<Frame>();

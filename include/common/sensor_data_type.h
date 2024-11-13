@@ -7,11 +7,13 @@
 
 #include "common/data_type.h"
 
-struct DataBase {
+struct DataBase
+{
     TimeStampUs timestamp_ = 0u; // us
 };
 
-struct IMUData : DataBase {
+struct IMUData : DataBase
+{
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     Vec3d angular_velocity_ = Vec3d::Zero();
@@ -19,7 +21,8 @@ struct IMUData : DataBase {
     Eigen::Quaterniond orientation_ = Eigen::Quaterniond::Identity();
 };
 
-struct GPSData : DataBase {
+struct GPSData : DataBase
+{
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     double longitude_{0.0};
@@ -31,17 +34,20 @@ struct GPSData : DataBase {
     Mat3d local_orientation = Mat3d::Identity();
 };
 
-struct NavStateData : DataBase {
+struct NavStateData : DataBase
+{
     using Ptr = std::shared_ptr<NavStateData>;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    void SetPose(const Mat4d& pose) {
+    void SetPose(const Mat4d& pose)
+    {
         R_ = pose.block<3, 3>(0, 0);
         P_ = pose.block<3, 1>(0, 3);
     }
 
-    [[nodiscard]] Mat4d Pose() const {
+    [[nodiscard]] Mat4d Pose() const
+    {
         Mat4d T = Mat4d::Identity();
         T.block<3, 3>(0, 0) = R_;
         T.block<3, 1>(0, 3) = P_;
@@ -58,4 +64,4 @@ struct NavStateData : DataBase {
     Mat15d info_ = Mat15d::Identity();
 };
 
-#endif //FUNNY_LIDAR_SLAM_SENSOR_DATA_TYPE_H
+#endif // FUNNY_LIDAR_SLAM_SENSOR_DATA_TYPE_H

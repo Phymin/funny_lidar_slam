@@ -5,16 +5,18 @@
 #ifndef FUNNY_LIDAR_SLAM_PREPROCESSING_H
 #define FUNNY_LIDAR_SLAM_PREPROCESSING_H
 
-#include "slam/system.h"
-#include "loam/feature_extractor.h"
-#include "loam/pointcloud_projector.h"
+#include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
+#include "lidar/lidar_distortion_corrector.h"
 #include "lidar/lidar_model.h"
 #include "lidar/lidar_point_type.h"
-#include "lidar/lidar_distortion_corrector.h"
+#include "loam/feature_extractor.h"
+#include "loam/pointcloud_projector.h"
+#include "slam/system.h"
 
-#include <livox_ros_driver/CustomMsg.h>
+// #include <livox_ros_driver/CustomMsg.h>
 
-class PreProcessing {
+class PreProcessing
+{
 public:
     using DataSearcherIMU = DataSearcher<IMUData>;
 
@@ -30,7 +32,8 @@ public:
 private:
     void InitVoxelGridFilter();
 
-    static pcl::PointCloud<PointXYZIRT>::Ptr ConvertMessageToCloud(const sensor_msgs::PointCloud2Ptr& cloud_ros_ptr);
+    static pcl::PointCloud<PointXYZIRT>::Ptr
+    ConvertMessageToCloud(sensor_msgs::msg::PointCloud2::SharedPtr cloud_ros_ptr);
 
     /*!
      * Compute lidar every point offset time
@@ -38,9 +41,11 @@ private:
      * @param cloud
      * @param lidar_rate
      */
-    static void ComputePointOffsetTime(const pcl::PointCloud<PointXYZIRT>::Ptr& cloud, double lidar_rate = 10.0);
+    static void ComputePointOffsetTime(const pcl::PointCloud<PointXYZIRT>::Ptr& cloud,
+                                       double lidar_rate = 10.0);
 
-    static std::pair<float, float> GetLidarPointMinMaxOffsetTime(const pcl::PointCloud<PointXYZIRT>::Ptr& cloud);
+    static std::pair<float, float>
+    GetLidarPointMinMaxOffsetTime(const pcl::PointCloud<PointXYZIRT>::Ptr& cloud);
 
 private:
     // voxel grid filter
@@ -56,4 +61,4 @@ private:
     System* system_ptr_ = nullptr;
 };
 
-#endif //FUNNY_LIDAR_SLAM_PREPROCESSING_H
+#endif // FUNNY_LIDAR_SLAM_PREPROCESSING_H

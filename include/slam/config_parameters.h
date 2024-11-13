@@ -9,7 +9,10 @@
 
 #include <memory>
 
-class ConfigParameters {
+#include "3rd/nlohmann/json.hpp"
+
+class ConfigParameters
+{
 public:
     // delete constructor
     ConfigParameters(ConfigParameters&&) = delete;
@@ -20,6 +23,8 @@ public:
 
     // instance
     static ConfigParameters& Instance();
+
+    std::string toString() const;
 
 private:
     ConfigParameters() = default;
@@ -113,4 +118,4 @@ public:
     std::string lidar_topic_{};
 };
 
-#endif //FUNNY_LIDAR_SLAM_CONFIG_PARAMETERS_H
+#endif // FUNNY_LIDAR_SLAM_CONFIG_PARAMETERS_H

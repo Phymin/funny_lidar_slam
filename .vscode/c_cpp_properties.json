@@ -1,0 +1,47 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/usr/include/**",
+        "/opt/ros/${ROS_DISTRO}/include/**",
+        "/opt/ros/${ROS_DISTRO}/include/rclcpp/**",
+        "../../install/tumi_msgs/include/**",
+        "${workspaceFolder}/3rd_parties/gcl/include/**",
+        "${workspaceFolder}/3rd_parties/path_lib/include/**",
+        "${workspaceFolder}/3rd_parties/robot_lib/include/**",
+        "${workspaceFolder}/core/control/include/**",
+        "${workspaceFolder}/core/localization/include/**",
+        "${workspaceFolder}/core/bridge/include/**",
+        "${workspaceFolder}/core/bridge/proto/**",
+        "${workspaceFolder}/core/monitor/include/**",
+        "${workspaceFolder}/common/tumi_common/include/**",
+        "${workspaceFolder}/common/config_server/include/**",
+        "${workspaceFolder}/common/log_aggregator/include/**",
+        "${workspaceFolder}/drivers/sensors/include/**",
+        "${workspaceFolder}/drivers/locator/include/**",
+        "${workspaceFolder}/drivers/chassis/include/**",
+        "${workspaceFolder}/drivers/driver_common/include/**",
+        "${workspaceFolder}/drivers/actuator/include/**",
+        "${workspaceFolder}/drivers/battery/include/**",
+        "${workspaceFolder}/drivers/imu/include/**",
+        "${workspaceFolder}/drivers/driver_interface/include/**",
+        "${workspaceFolder}/drivers/obstacle_detection/include/**",
+        "${workspaceFolder}/drivers/teleop/include/**",
+        "${workspaceFolder}/drivers/devices/include/**",
+        "${workspaceFolder}/drivers/aruco_detection/include/**",
+        "${workspaceFolder}/drivers/location/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "compileCommands": "../../build/compile_commands.json",
+      "cStandard": "gnu11",
+      "cppStandard": "c++17"
+    }
+  ],
+  "version": 4
+}

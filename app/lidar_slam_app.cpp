@@ -1,36 +1,42 @@
 //
 // Created by Zhang Zhimeng on 22-10-28.
 //
-#include "slam/system.h"
 #include "common/file_manager.h"
 #include "common/keyframe.h"
+#include "slam/system.h"
 
 #include "3rd/backward.hpp"
 
-#include <ros/ros.h>
 #include <glog/logging.h>
+#include <rclcpp/executors.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/utilities.hpp>
 
-namespace backward {
+namespace backward
+{
 backward::SignalHandling sh;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     google::InitGoogleLogging(argv[0]);
     FLAGS_logtostderr = true;
     FLAGS_colorlogtostderr = true;
 
-    CHECK(MakeDirs(KeyFrame::kKeyFramePath) == 0) << "Failed to create folder: " << KeyFrame::kKeyFramePath;
+    CHECK(MakeDirs(KeyFrame::kKeyFramePath) == 0)
+        << "Failed to create folder: " << KeyFrame::kKeyFramePath;
 
-    ros::init(argc, argv, "funny_lidar_slam");
+    rclcpp::init(argc, argv);
 
-    const auto node_handle_ptr = std::make_shared<ros::NodeHandle>();
+    const auto node_handle_ptr = std::make_shared<rclcpp::Node>("funny_lidar_slam_node");
 
     System system(node_handle_ptr);
 
-    ros::Rate rate(1000);
+    rclcpp::Rate rate(1000);
 
-    while (ros::ok()) {
-        ros::spinOnce();
+    while (rclcpp::ok())
+    {
+        rclcpp::spin_some(node_handle_ptr);
 
         system.Run();
 
@@ -38,6 +44,7 @@ int main(int argc, char** argv) {
     }
 
     google::ShutdownGoogleLogging();
+    rclcpp::shutdown();
 
     return 0;
 }
